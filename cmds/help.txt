@@ -1,0 +1,14 @@
+list of commands for 'chess bot':
+
+	!board (displays the current board state)
+	!RESET (restarts the current board state)
+	!count (displays the turn number)
+	!move? (displays whos turn to move it is)
+	!pieces (displays the positions of every piece in LetterNumber form)
+	
+How to move:
+
+	!!A1 -> A2
+	
+		This command moves the piece that is on A1 to B2.
+		If the move is illegal then no piece is moved and the players 		turn is not switched
