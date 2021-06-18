@@ -250,5 +250,3 @@ for key in knight_keys:
 path = file_path + knight_json_h
 with open(path, "w") as fh:
     json.dump(knight_json, fh)
-
-
