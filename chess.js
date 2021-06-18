@@ -1,6 +1,20 @@
-var fs = require("fs");
+const fs = require("fs");
+const Discord = require('discord.js');
+const { execFile } = require('child_process');
+const path = require('path')
+const {spawn} = require('child_process')
+//const { argv } = require("node:process");
+//const { sign } = require("node:crypto");
+
+
+const client = new Discord.Client();
+
+var board = setBoard();
 
 var pieceMoves = {};
+
+const letters = ["A","B","C","D", "E","F","G","H"];
+const numbers = ["1","2","3","4", "5","6","7","8"];
 
 fs.readFile('./movements/king.json', "utf8", (err, data) => {
 	if (err) { console.log("Error, file read incomplete!!")}
@@ -36,7 +50,7 @@ fs.readFile('./movements/knight.json', "utf8", (err, data) => {
 	else { 
 		const knight_moves = JSON.parse(data);
 
-		pieceMoves["white_pawn"] = white_pawn_moves;
+		pieceMoves["knight"] = knight_moves;
 		}
 	});
 
@@ -58,26 +72,10 @@ fs.readFile('./movements/white_pawn.json', "utf8", (err, data) => {
 		}
 	});
 
-//var pieceMoves = { "king": king_moves,
-//					"bishop": bishop_moves,
-//					"black_pawn": black_pawn_moves,
-//					"white_pawn": white_pawn_moves,
-//					"knight": knight_moves,
-//					"rook": rook_moves
-//					};
-
-var letters = ["A","B","C","D", "E","F","G","H"];
-var numbers = ["1","2","3","4", "5","6","7","8"];
-
 function arrayPointer(posX, posY){
 		var obj = {x: posX, y: posY};
 
 		return obj
-	}
-
-function vector2D(run, rise) {
-
-	return {x: rise, y: run};
 	}
 
 function makePiece(name, color) {
@@ -124,36 +122,6 @@ function makePiece(name, color) {
 		}
 
 	return myPiece;
-	}
-
-function formatBoardString(array2) { //Currently does not work in discord due to nonequal width fonts
-
-	var returnString = "";
-
-	var r;
-	for (r=0; r<array2.length;r++) {
-
-		var currRow = array2[r];
-		
-		var rowString = "--------------------------------\n";
-		var c;
-		for (c=0; c<currRow.length; c++){
-
-			var square = currRow[c];
-
-			if (square != null){ //Square is not empty
-				rowString += ("|" + square.str);
-				}
-
-			else {                
-				rowString += "|     ";
-				}
-			}
-		rowString += "|\n";
-		returnString += rowString;
-
-		}
-	return returnString;    
 	}
 
 function setBoard(){
@@ -209,18 +177,18 @@ function setBoard(){
 	var board = {
 
 		pieces: [[bRook1, bKnight1, bBishop1, bQueen, bKing, bBishop2, bKnight2, bRook2],
-				[bPawn1, bPawn2, bPawn3, bPawn4, bPawn5, bPawn6, bPawn7, bPawn8],
-				[wPawn1, wPawn2, wPawn3, wPawn4, wPawn5, wPawn6, wPawn7, wPawn8],
-				[wRook1, wKnight1, wBishop1, wQueen, wKing, wBishop2, wKnight2, wRook2]],
+			[bPawn1, bPawn2, bPawn3, bPawn4, bPawn5, bPawn6, bPawn7, bPawn8],
+			[wPawn1, wPawn2, wPawn3, wPawn4, wPawn5, wPawn6, wPawn7, wPawn8],
+			[wRook1, wKnight1, wBishop1, wQueen, wKing, wBishop2, wKnight2, wRook2]],
 
 		boardArray: [[bRook1, bKnight1, bBishop1, bQueen, bKing, bBishop2, bKnight2, bRook2],
-					[bPawn1, bPawn2, bPawn3, bPawn4, bPawn5, bPawn6, bPawn7, bPawn8],
-					[null, null, null, null, null, null, null, null],
-					[null, null, null, null, null, null, null, null],
-					[null, null, null, null, null, null, null, null],
-					[null, null, null, null, null, null, null, null],
-					[wPawn1, wPawn2, wPawn3, wPawn4, wPawn5, wPawn6, wPawn7, wPawn8],
-					[wRook1, wKnight1, wBishop1, wQueen, wKing, wBishop2, wKnight2, wRook2]], 
+				[bPawn1, bPawn2, bPawn3, bPawn4, bPawn5, bPawn6, bPawn7, bPawn8],
+				[null, null, null, null, null, null, null, null],
+				[null, null, null, null, null, null, null, null],
+				[null, null, null, null, null, null, null, null],
+				[null, null, null, null, null, null, null, null],
+				[wPawn1, wPawn2, wPawn3, wPawn4, wPawn5, wPawn6, wPawn7, wPawn8],
+				[wRook1, wKnight1, wBishop1, wQueen, wKing, wBishop2, wKnight2, wRook2]], 
 					//Two dimensional array representing the board state
 
 		currMove: 0, //0 is White move, 1 is Black move
@@ -244,7 +212,7 @@ function setBoard(){
 	return board; //Return pointer to board object
 	}
 
-function formatPieceString(array2) { // Text display of all piece positions
+function formatPieceString(array2) { // Text display of all piece positionsl
 
 	var returnString = "\n";
 
@@ -263,7 +231,7 @@ function formatPieceString(array2) { // Text display of all piece positions
 				
 				var posx = letterCol[c];
 				var posy = array2.length - c;
-				returnString += (tempString + " at " + posx + posy + "\n");
+				returnString += (tempString + " -->" + posx + posy + "\n");
 				}
 
 			}
@@ -289,7 +257,7 @@ function letterNumber_to_arrayIndex(string) {
 
 	if (string[1] < 8){
 
-		y = parseInt(string[1]) - 1;
+		y = 8 - parseInt(string[1]);
 		}
 
 	if (x == null || y == null){
@@ -302,8 +270,6 @@ function letterNumber_to_arrayIndex(string) {
 
 	return rtn;
 	}
-
-function movePiece(board, orgin, desination) {}
 
 function validMove(orig, dest, board) {
 
@@ -319,13 +285,12 @@ function validMove(orig, dest, board) {
 	if (piece.name == "pawn"){
 
 		if (piece.color == "black") { dictKey = "black_pawn";}
-
 		else { dictKey = "white_pawn";}
 		}
 
 	else { dictKey = piece.name;}
 
-	var moveList = pieceMoves.dictKey.origString;
+	var moveList = pieceMoves[dictKey][origString];
 
 	var i;	
 
@@ -342,22 +307,45 @@ function validMove(orig, dest, board) {
 	return valid;
 	}
 
+function movePiece(orig, dest, board) {
+
+	var target = board.boardArray[orig.y][orig.x];
+
+	board.boardArray[dest.y][dest.x] = target;
+
+	board.boardArray[orig.y][orig.x] = null;
+	}
+
+function preBoardDisplay(board) {
+
+	var boardStr = ""
+
+	var r;
+	for (r=0; r<board.boardArray.length; r++) {
+
+		var c;
+		for (c=0; c<board.boardArray[0].length; c++) {
+
+			if (board.boardArray[r][c] != null){
+				boardStr += board.boardArray[r][c].str;
+				boardStr += "|";
+				}
+			else {boardStr += "  |"}
+			}		
+		}
+
+	boardStr.slice(0, -1);
+
+	return spawn('python3', ["-u", path.join(__dirname, 'image.py'), boardStr]);
+
+	}	
 
 // -------------------------!!Start of Bot Code!!--------------------------------
-
-
-const Discord = require('discord.js');
-const { argv } = require("node:process");
-//const { sign } = require("node:crypto");
-const client = new Discord.Client();
-
-
-var board = setBoard();
 
 client.on('ready', () => {
  console.log(`Logged in as ${client.user.tag}!`);
  });
-
+  
 client.on('message', msg => {
 
 	if (msg.content == "!help"){
@@ -371,13 +359,26 @@ client.on('message', msg => {
 
 	else if (msg.content =="!board"){
 
-		var tempString = "not done";
-		msg.reply("\n" + tempString);
+		const subprocess = preBoardDisplay(board);
+		// print output of script
+		subprocess.stdout.on('data', (data) => { console.log(`${data}`); });
+		subprocess.stderr.on('data', (data) => { console.log(`error:${data}`); });
+		subprocess.stderr.on('close', () => { console.log("Closed"); });
+
+		setTimeout(function() {console.log("Wating for 500.")}, 500);
+
+		msg.channel.send({
+			files: [{
+			attachment: "games/game.png",
+			name: "game.png"
+				}]
+			});
+
 		}
 
 	else if (msg.content == "!pieces") {
 
-		board = getBoard();
+//		board = getBoard();
 		var tempString = formatPieceString(board.boardArray);
 
 		msg.reply("\n" + tempString);
@@ -386,32 +387,55 @@ client.on('message', msg => {
 	else if (msg.content == "!RESET") {
 
 		board.RESET();
+
+		console.log(board.boardArray);
 		msg.reply(" New game started");
 		}
 
 	else if (msg.content.length == 10) { // Probably the move command
 
-		var reply = "";
+		var reply;
 
-		var orig = msg.content.slice(2,4);
-		var dest = msg.content.slice(8, 10);
+		var raw_orig = msg.content.slice(2,4);
+		var raw_dest = msg.content.slice(8,10);
 	
-		orig = letterNumber_to_arrayIndex(orig); // Convert from A1 form to [r][c] form
-		dest = letterNumber_to_arrayIndex(dest);
+		var orig = letterNumber_to_arrayIndex(raw_orig); // Convert from A1 form to [r][c] form
+		var dest = letterNumber_to_arrayIndex(raw_dest);
 
+		var origPiece = board.boardArray[orig.y][orig.x];
+		var destPiece = board.boardArray[dest.y][dest.x];
+
+		console.log(origPiece, destPiece);
 		if (orig == null){  // Didn't recieve proper coordinates
 			reply = "Oops, improper command....";
 			}
 
+		else {
 
-		else if (validMove(orig, dest, board) == true){ // Recieved proper coordinates 
+			if (destPiece != null) {
+				if (origPiece.color == destPiece.color){reply = "Oops, improper command....";}
 
-			movePiece(orig, dest);
-			reply = orig + " to " + dest;
+				else {
+					if (validMove(orig, dest, board)) {
+						movePiece(orig, dest, board);	
+						reply = raw_orig + " to " + raw_dest;
+						}
+
+					else {reply = "Oops, improper command....."}
+					}
+				}
+			else {
+
+				if (validMove(orig, dest, board)) {
+					movePiece(orig, dest, board);
+					reply = raw_orig + " to " + raw_dest
+					}
+				}
 			}
 
-		msg.reply(reply);        
+		msg.reply(reply);
 		}
+
 	});
 
-client.login('');
+client.login('ODM5MTAxODAwNDEzOTIxMjgw.YJEwcg.hbsDkmLYqSMVOIE8LuULQBRXg1g');
